@@ -1,0 +1,21 @@
+{
+  "name": "ukwan/pcurl",
+  "type": "framework",
+  "description": "A pleasant curl library",
+  "keywords": [
+    "curl",
+    "php",
+    "http"
+  ],
+  "homepage": "https://github.com/ukwan/pcurl",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "wangkuikui",
+      "email": "wankui007@gmail.com"
+    }
+  ],
+  "require": {
+    "php": ">=5.4"
+  }
+}
