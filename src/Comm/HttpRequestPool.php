@@ -1,11 +1,6 @@
 <?php
 /**
  * curl请求封装-pool
- *
- * @package    Comm
- * @copyright  copyright(2016) 51talk.com all rights reserved
- * @author     talk.com php team
- * @version    2015-09-28 23:58:40
  */
 
 namespace PCurl\Comm;

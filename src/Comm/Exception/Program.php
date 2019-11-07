@@ -16,4 +16,5 @@ namespace PCurl\Comm\Exception;
  */
 class Program extends \Exception
 {
+
 }

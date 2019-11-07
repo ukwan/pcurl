@@ -140,11 +140,6 @@ class HttpRequest
         }
     }
 
-    public function setUrlencode($urlencode)
-    {
-        $this->urlencode = $urlencode;
-    }
-
     public function setCallback($method, $obj)
     {
         $this->callbackMethod = $method;

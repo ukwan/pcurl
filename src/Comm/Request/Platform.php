@@ -1,17 +1,13 @@
 <?php
+/**
+ * 接口请求类
+ */
 
 namespace PCurl\Comm\Request;
 
-/**
- * openapi接口请求类
- *
- * @package Comm\Api\Request
- */
 class Platform extends Base
 {
-    public static $curl_debug_log;
-
-    /*
+    /**
      * @var string 接口返回值格式
      */
     protected $returnFormat = "json";
@@ -28,16 +24,6 @@ class Platform extends Base
     public function __construct($url, $method = '', $content_type = '')
     {
         parent::__construct($url, $method, $content_type);
-        $ip = \PCurl\Tool\Ip::getClientIP();
-        $this->httpRequest->addHeader(self::REQUEST_IP_KEY, $ip);
-    }
-
-    /**
-     * @param string $returnFormat
-     */
-    public function setReturnFormat($returnFormat = 'json')
-    {
-        $this->returnFormat = $returnFormat;
     }
 
     /**
@@ -50,7 +36,8 @@ class Platform extends Base
     public function getResponse()
     {
         try {
-            parent::send();
+            $this->httpRequest->addHeader(self::REQUEST_IP_KEY, \PCurl\Tool\Ip::getClientIP());
+            parent::send();//发送curl请求
             $content = $this->httpRequest->getResponseContent();
             $result = $this->returnFormat == 'json' ? \PCurl\Tool\Util::jsonDecode($content, true) : $content;
             $expMsg = $expCode = false;
@@ -83,16 +70,4 @@ class Platform extends Base
     {
         $this->httpRequest->addHeader($primary, $secondary, $urlencode);
     }
-
-
-    /**
-     * 设置url加密
-     *
-     * @param $urlencode
-     */
-    public function setUrlEnCode($urlencode)
-    {
-        $this->httpRequest->setUrlencode($urlencode);
-    }
-
 }

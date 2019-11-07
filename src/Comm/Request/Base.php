@@ -18,7 +18,7 @@ namespace PCurl\Comm\Request;
 abstract class Base
 {
     /**
-     * @var \Comm\HttpRequest
+     * @var \PCurl\Comm\HttpRequest
      */
     protected $httpRequest;
     /**

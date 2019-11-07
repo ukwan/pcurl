@@ -6,11 +6,11 @@ class PCurl extends \PCurl\Comm\Request\Http
 {
     /**
      * PCurl constructor.
-     * @param string $host 接口地址
+     * @param string $url 接口地址
      */
-    public function __construct($host)
+    public function __construct($url)
     {
-        parent::$host = $host;
+        parent::$url = $url;
     }
 
     /**
@@ -19,9 +19,9 @@ class PCurl extends \PCurl\Comm\Request\Http
      * @param array $rules 参数规则
      * @param array $param 参数
      * @param string $method curl方法post，get
-     * @return array|bool|object
      * @throws \PCurl\Comm\Exception\Api
      * @throws \PCurl\Comm\Exception\Program
+     * @return array|bool|object
      */
     public function sendRequest($rules, $param, $method = "GET")
     {
@@ -54,7 +54,6 @@ class PCurl extends \PCurl\Comm\Request\Http
     {
         foreach ($rules as $val) {
             list($field, $type, $require) = $val;
-            //添加参数规则 [参数名 参数值类型,是否必须]
             $this->obj_request->addRule($field, $type, $require);
             $this->obj_request->$field = isset($param[$field]) ? $param[$field] : null;
         }
