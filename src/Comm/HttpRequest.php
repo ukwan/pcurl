@@ -1,6 +1,6 @@
 <?php
 
-namespace Pcurl;
+namespace PCurl\Comm;
 
 /**
  * curl请求封装
@@ -11,21 +11,21 @@ namespace Pcurl;
 class HttpRequest
 {
     const CRLF = "\r\n";
-    public $cookies     = array();
-    public $headers     = array();
-    public $postFields  = array();
+    public $cookies = array();
+    public $headers = array();
+    public $postFields = array();
     public $queryFields = array();
-    public $hasUpload   = false;
-    public $fileFields  = array();
+    public $hasUpload = false;
+    public $fileFields = array();
 
     public $url;
-    public $method      = false;
+    public $method = false;
     public $hostName;
-    public $hostPort    = "80";
-    public $isSsl       = false;
+    public $hostPort = "80";
+    public $isSsl = false;
     public $actualHostIp;
-    public $noBody      = false;
-    public $reqRange    = array();
+    public $noBody = false;
+    public $reqRange = array();
     public $queryString = '';
 
     public $responseState;
@@ -35,14 +35,14 @@ class HttpRequest
     public $responseHeader;
     public $responseContent;
 
-    public $debug     = false;
+    public $debug = false;
     public $urlencode = "urlencodeRfc3986";
 
     public $connectTimeout = 1000;
-    public $timeout        = 1000;
+    public $timeout = 1000;
 
-    private $ch          = null;
-    private $curlId      = false;
+    private $ch = null;
+    private $curlId = false;
     private $newCurlPool = false;
 
     private $callbackMethod;
@@ -53,7 +53,7 @@ class HttpRequest
     public $gzip = false;
 
     public $user = null;
-    public $psw  = null;
+    public $psw = null;
 
     /**
      * 请求头（headers）中的 Content-Type,请求中的消息主体是用何种方式编码
@@ -72,16 +72,16 @@ class HttpRequest
     public function setUrl($url)
     {
         if (!empty($this->url)) {
-            throw new \Comm\Exception\Program("url be setted");
+            throw new \PCurl\Comm\Exception\Program("url be setted");
         }
 
         $urlElement = parse_url($url);
 
         if ($urlElement["scheme"] == "https") {
-            $this->isSsl    = true;
+            $this->isSsl = true;
             $this->hostPort = '443';
         } elseif ($urlElement["scheme"] != "http") {
-            throw new \Comm\Exception\Program("api url not support. " . $url);
+            throw new \PCurl\Comm\Exception\Program("api url not support. " . $url);
         }
 
         $this->hostName = $urlElement['host'];
@@ -89,7 +89,7 @@ class HttpRequest
         $this->url = $urlElement['scheme'] . '://' . $this->hostName;
         if (isset($urlElement['port'])) {
             $this->hostPort = $urlElement['port'];
-            $this->url      .= ':' . $urlElement['port'];
+            $this->url .= ':' . $urlElement['port'];
         }
         if (isset($urlElement['path'])) {
             $this->url .= $urlElement['path'];
@@ -97,8 +97,8 @@ class HttpRequest
 
         if (!empty($urlElement['query'])) {
             parse_str($urlElement['query'], $queryFields);
-            $keys              = array_map(array($this, "runUrlencode"), array_keys($queryFields));
-            $values            = array_map(array($this, "runUrlencode"), array_values($queryFields));
+            $keys = array_map(array($this, "runUrlencode"), array_keys($queryFields));
+            $values = array_map(array($this, "runUrlencode"), array_values($queryFields));
             $this->queryFields = array_merge($this->queryFields, array_combine($keys, $values));
         }
     }
@@ -135,7 +135,7 @@ class HttpRequest
             if (is_a($logFormatter, '\Comm\Log\Formatter')) {
                 $this->logFormatter = $logFormatter;
             } else {
-                throw new \Comm\Exception\Program('logFomatter must be \Comm\Log\Formatter');
+                throw new \PCurl\Comm\Exception\Program('logFomatter must be \Comm\Log\Formatter');
             }
         }
     }
@@ -148,7 +148,7 @@ class HttpRequest
     public function setCallback($method, $obj)
     {
         $this->callbackMethod = $method;
-        $this->callbackObj    = $obj;
+        $this->callbackObj = $obj;
     }
 
     public function setNeedNewCurl($flag = false)
@@ -162,35 +162,35 @@ class HttpRequest
     {
         $this->content_type = strtolower($content_type);
         if (strpos($this->content_type, 'json') !== false) {
-            $this->headers['Accept']       = 'application/json';
+            $this->headers['Accept'] = 'application/json';
             $this->headers['Content-type'] = 'application/json';
         }
     }
 
     public function addHeader($primary, $secondary, $urlencode = false)
     {
-        $primary                 = $this->runUrlencode($primary, $urlencode);
-        $secondary               = $this->runUrlencode($secondary, $urlencode);
+        $primary = $this->runUrlencode($primary, $urlencode);
+        $secondary = $this->runUrlencode($secondary, $urlencode);
         $this->headers[$primary] = $secondary;
     }
 
     public function addUserPsw($user, $psw)
     {
         $this->user = $user;
-        $this->psw  = $psw;
+        $this->psw = $psw;
     }
 
     public function addCookie($name, $value, $urlencode = false)
     {
-        $name                 = $this->runUrlencode($name, $urlencode);
-        $value                = $this->runUrlencode($value, $urlencode);
+        $name = $this->runUrlencode($name, $urlencode);
+        $value = $this->runUrlencode($value, $urlencode);
         $this->cookies[$name] = $value;
     }
 
     public function addQueryField($name, $value, $urlencode = false)
     {
-        $name                     = $this->runUrlencode($name, $urlencode);
-        $value                    = $this->runUrlencode($value, $urlencode);
+        $name = $this->runUrlencode($name, $urlencode);
+        $value = $this->runUrlencode($value, $urlencode);
         $this->queryFields[$name] = $value;
     }
 
@@ -201,15 +201,15 @@ class HttpRequest
 
     public function addPostField($name, $value, $urlencode = false)
     {
-        $name                    = $this->runUrlencode($name, $urlencode);
-        $value                   = $this->runUrlencode($value, $urlencode);
+        $name = $this->runUrlencode($name, $urlencode);
+        $value = $this->runUrlencode($value, $urlencode);
         $this->postFields[$name] = $value;
     }
 
     public function addPostFile($name, $path)
     {
         $this->hasUpload = true;
-        $name            = $this->runUrlencode($name);
+        $name = $this->runUrlencode($name);
         if (class_exists('\CURLFile')) {
             $this->fileFields[$name] = new \CURLFile(realpath($path), mime_content_type($path), pathinfo($path, PATHINFO_BASENAME));
         } else {
@@ -236,17 +236,16 @@ class HttpRequest
     public function curlInit()
     {
         if ($this->ch !== null) {
-            throw new \Comm\Exception\Program('curl init already');
+            throw new \PCurl\Comm\Exception\Program('curl init already');
         }
 
         if (empty($this->hostName) || empty($this->url)) {
-            \Tool\Log::write('curl init error', 'comm.httprequest.emptyurl', \Tool\Log::ERROR, true);
-            throw new \Comm\Exception\Program('httprequest need api_url' . ', uniqid:' . \Comm\Context::get('req_uniqid'));
+            throw new \PCurl\Comm\Exception\Program('httprequest need api_url' . ', uniqid:' . \Comm\Context::get('req_uniqid'));
         }
 
-        $ch            = \Comm\HttpRequestPool::getCurl($this->getHostID(), $this->newCurlPool);
-        $this->curlId  = self::fetchCurlID($ch);
-        $this->ch      = $ch;
+        $ch = \PCurl\Comm\HttpRequestPool::getCurl($this->getHostID(), $this->newCurlPool);
+        $this->curlId = self::fetchCurlID($ch);
+        $this->ch = $ch;
         $this->curlCli = 'curl -v ';
         $this->curlSetopt();
     }
@@ -273,7 +272,7 @@ class HttpRequest
             $rtn = false;
         }
         $this->setResponse($content, curl_getinfo($this->ch));
-        \Comm\HttpRequestPool::resetCurlState($this->getHostID(), $this->getCurlID());
+        \PCurl\Comm\HttpRequestPool::resetCurlState($this->getHostID(), $this->getCurlID());
         $this->resetCh();
 
         return $rtn;
@@ -281,14 +280,14 @@ class HttpRequest
 
     public function resetCh()
     {
-        $this->ch     = null;
+        $this->ch = null;
         $this->curlId = false;
     }
 
     public function getCurlCli()
     {
         if (!$this->debug) {
-            throw new \Comm\Exception\Program("cann't get info when debug disable");
+            throw new \PCurl\Comm\Exception\Program("cann't get info when debug disable");
         }
 
         return $this->curlCli;
@@ -297,8 +296,8 @@ class HttpRequest
     public function setResponseState($state, $errorMsg, $errorNo)
     {
         $this->responseState = $state;
-        $this->errorMsg      = $errorMsg;
-        $this->errorNo       = $errorNo;
+        $this->errorMsg = $errorMsg;
+        $this->errorNo = $errorNo;
     }
 
     public function setHttpCode($http_code)
@@ -313,7 +312,7 @@ class HttpRequest
         if (empty($content)) {
             return;
         }
-        $sectionSeparator       = str_repeat(self::CRLF, 2);
+        $sectionSeparator = str_repeat(self::CRLF, 2);
         $sectionSeparatorLength = strlen($sectionSeparator);
         // pick out http 100 status header
         $http_100 = "HTTP/1.1 100 Continue" . $sectionSeparator;
@@ -321,7 +320,7 @@ class HttpRequest
             $content = substr($content, strlen($http_100));
         } else {
             //过滤郭峰http 100 status header
-            $http_100_header  = "HTTP/1.1 100 Continue";
+            $http_100_header = "HTTP/1.1 100 Continue";
             $http_100_content = "Content-Length: 0" . $sectionSeparator;
             if (false !== strpos($content, $http_100_header)) {
                 $content = substr($content, strlen($http_100_header));
@@ -342,14 +341,14 @@ class HttpRequest
         }
 
         $this->responseContent = substr($content, $pos + $sectionSeparatorLength);
-        $headers               = substr($content, $lastHeaderPos, $pos - $lastHeaderPos);
-        $headers               = explode(self::CRLF, $headers);
+        $headers = substr($content, $lastHeaderPos, $pos - $lastHeaderPos);
+        $headers = explode(self::CRLF, $headers);
         foreach ($headers as $header) {
             if (false !== strpos($header, "HTTP/1.1")) {
                 continue;
             }
 
-            $tmp               = explode(":", $header, 2);
+            $tmp = explode(":", $header, 2);
             $responseHeaderKey = strtolower(trim($tmp[0]));
             if (!isset($this->responseHeader[$responseHeaderKey])) {
                 $this->responseHeader[$responseHeaderKey] = trim($tmp[1]);
@@ -394,7 +393,7 @@ class HttpRequest
             if (isset($this->curlInfo[$key])) {
                 return $this->curlInfo[$key];
             } else {
-                throw new \Comm\Exception\Program("info: " . $key . " not exists");
+                throw new \PCurl\Comm\Exception\Program("info: " . $key . " not exists");
             }
         }
     }
@@ -407,7 +406,7 @@ class HttpRequest
             if (isset($this->responseHeader[$key])) {
                 return $this->responseHeader[$key];
             } else {
-                throw new \Comm\Exception\Program("header: " . $key . " not exists");
+                throw new \PCurl\Comm\Exception\Program("header: " . $key . " not exists");
             }
         }
     }
@@ -486,7 +485,7 @@ class HttpRequest
         $pairs = [];
         foreach ($queryData as $key => $value) {
             if (is_array($value) && !empty($value)) {
-                $mid   = self::httpBuildQuery($value, $keyPrefix ? ($keyPrefix . '[' . $key . ']') : $key);
+                $mid = self::httpBuildQuery($value, $keyPrefix ? ($keyPrefix . '[' . $key . ']') : $key);
                 $pairs = array_merge($pairs, $mid);
             } elseif (is_array($value) && empty($value)) {
                 $pairs[] = ($keyPrefix ? ($keyPrefix . '[' . $key . ']') : $key) . '=';
@@ -575,10 +574,6 @@ class HttpRequest
             curl_setopt($this->ch, CURLOPT_PROXYPORT, $this->hostPort);
             $this->curlCli .= " -x " . $this->actualHostIp . ":" . $this->hostPort;
         }
-        if (\Comm\Context::get('isTauth2', false) === true) {
-            \Tool\Log::write('cookies:' . json_encode($this->cookies) . 'headers:' . json_encode($this->headers), 'comm.httprequest.tauth');
-            unset($this->cookies);
-        }
 
         $this->loadCookies();
         $this->loadHeaders();
@@ -591,9 +586,6 @@ class HttpRequest
             $this->curlCli .= " -X \"{$this->method}\"";
         }
         $this->curlCli .= " \"" . $this->url . ($this->queryString ? '?' . $this->queryString : '') . "\"";
-        if (\Comm\Context::get('isTauth2', false) === true) {
-            \Tool\Log::write('curlCli:' . $this->curlCli, 'comm.httprequest.curl');
-        }
     }
 
     private function loadUserPwd()
@@ -601,7 +593,7 @@ class HttpRequest
         if (is_null($this->user) || is_null($this->psw)) {
             return;
         }
-        $strUserpwd    = $this->user . ':' . $this->psw;
+        $strUserpwd = $this->user . ':' . $this->psw;
         $this->curlCli .= "-u \"$strUserpwd\" ";
         curl_setopt($this->ch, CURLOPT_USERPWD, $strUserpwd);
     }
@@ -628,9 +620,9 @@ class HttpRequest
         }
         $headers = array();
         foreach ($this->headers as $k => $v) {
-            $tmp           = $k . ":" . $v;
+            $tmp = $k . ":" . $v;
             $this->curlCli .= " -H \"" . $tmp . "\"";
-            $headers[]     = $tmp;
+            $headers[] = $tmp;
         }
 
         curl_setopt($this->ch, CURLOPT_HTTPHEADER, $headers);

@@ -1,5 +1,6 @@
 <?php
-namespace Comm\Exception;
+
+namespace PCurl\Comm\Exception;
 
 /**
  * 程序构建期间、程序员认为导致发生的错误，涵盖：

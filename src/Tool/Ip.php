@@ -1,11 +1,6 @@
 <?php
-/**
- *
- * @package    Tool
- * @version    2015-09-24 11:22:33
- */
 
-namespace Tool;
+namespace PCurl\Tool;
 
 class Ip
 {

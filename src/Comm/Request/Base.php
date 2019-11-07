@@ -1,5 +1,6 @@
 <?php
-namespace Pcurl\Comm\Request;
+
+namespace PCurl\Comm\Request;
 
 /**
  * HttpRequest Wrapper类
@@ -106,7 +107,7 @@ abstract class Base
      */
     public function __construct($url, $method = '', $content_type = '')
     {
-        $this->httpRequest = new \Pcurl\HttpRequest($url);
+        $this->httpRequest = new \PCurl\Comm\HttpRequest($url);
 
         $this->method = strtoupper($method);
         $this->httpRequest->setMethod($method);
@@ -116,37 +117,31 @@ abstract class Base
     /**
      * 发送请求 curl错误在这里被处理,正确的返回值由getResponse处理
      *
-     * @throws \Comm\Exception\Api
+     * @throws \PCurl\Comm\Exception\Api
+     * @throws \PCurl\Comm\Exception\Program
+     * @throws \PCurl\Comm\Exception\Timeout
      */
     protected function send()
     {
         $this->applyRules();
         $this->runCallback("beforeSend");
         $sendRst = $this->httpRequest->send();
-
-        //只有测试环境和开发环境才写日志
-        if (\Tool\Misc::envCheck() == false) {
-            $this->debug();
-        }
         $this->runCallback("afterSend");
 
         //请求时间超过超时阀值，记录日志
         $warningTimeout = max($this->httpRequest->timeout, $this->getWarningTimeout()) / 1000;
-        $responseTime   = $this->httpRequest->getResponseTime();
-        if ($warningTimeout != 0 && $responseTime >= $warningTimeout && \Tool\Misc::envCheck()) {
-            \Comm\Api\Request\Log::writeError($this->httpRequest, \Comm\Api\Request\Log::ERROR_TIMEOUT);
-            throw new \Comm\Exception\Timeout($this->getExceptionMsg());
+        $responseTime = $this->httpRequest->getResponseTime();
+        if ($warningTimeout != 0 && $responseTime >= $warningTimeout) {
+            throw new \PCurl\Comm\Exception\Timeout($this->getExceptionMsg());
         }
 
         //无返回,重试一次[超时不重试]
         $iCurlNo = $this->httpRequest->getErrorNo();
         if ($this->retry > 0 && !$sendRst && ($responseTime < $this->httpRequest->timeout / 1000 || $iCurlNo == 28 || $iCurlNo == 7 || $iCurlNo == 6)) {
-            //echo sprintf('-----url=%s, retry=%s, responseTime=%s, timeout=%s, connectTimeout=%s <br>', $this->httpRequest->getUrl(),$this->retry, $responseTime, $this->httpRequest->timeout, $this->httpRequest->connectTimeout) . PHP_EOL;
             $this->retry = $this->retry - 1;
             $this->send();
         } elseif (!$sendRst) {
-            \Comm\Api\Request\Log::writeError($this->httpRequest, \Comm\Api\Request\Log::ERROR);
-            throw new \Comm\Exception\Api($this->getExceptionMsg());
+            throw new \PCurl\Comm\Exception\Api($this->getExceptionMsg());
         }
     }
 
@@ -156,52 +151,12 @@ abstract class Base
     protected function getExceptionMsg()
     {
         $responseInfo = $this->httpRequest->getResponseInfo();
-        $expMsg       = '';
-        $expMsg .= 'uniqid:' . \Comm\Context::get('req_uniqid') . ',';
-        $expMsg .= 'url:' . \Comm\Context::getCurrentUrl(false) . ',';
+        $expMsg = '';
         $expMsg .= 'total_time:' . $responseInfo['total_time'] . ',';
         $expMsg .= 'request:' . $responseInfo['url'] . ',';
         $expMsg .= 'msg:' . $this->httpRequest->getErrorNo() . ':' . $this->httpRequest->getErrorMsg();
 
         return $expMsg;
-    }
-
-    protected function debug()
-    {
-        //超过0.3秒，写日志
-        $timeoutLog = false;
-        if ($this->httpRequest->getResponseInfo('total_time') > 0.3) {
-            $timeoutLog = true;
-        }
-
-        static $requestFlag, $sequenceNo;
-        if (empty($requestFlag)) {
-            $requestFlag = true;
-            $sequenceNo  = 1;
-            $msg         = "[" . date('Y-m-d H:i:s') . "] " . \Comm\Context::getServer('REQUEST_URI');
-            $msg .= " (at " . \Tool\Ip::getClientIP() . ', use ' . \Comm\ClientProber::getClientAgent('browser') . "), ";
-        } else {
-            $sequenceNo++;
-            $msg = "";
-        }
-        $msg .= "api: " . $this->httpRequest->url . ', ';
-        $msg .= "sn: " . $sequenceNo . ', ';
-        $msg .= "php stack: " . $this->getBacktraceInfo() . ', ';
-        $msg .= "http code: " . $this->httpRequest->getResponseInfo('http_code') . ', ';
-        $msg .= "used time: " . $this->httpRequest->getResponseInfo('total_time') . " s" . ', ';
-        $msg .= "request size: " . $this->httpRequest->getResponseInfo('request_size') . " byte" . ', ';
-        $download_size = $this->httpRequest->getResponseInfo('download_content_length');
-        $download_size = $download_size > 0 ? $download_size : $this->httpRequest->getResponseInfo('size_download');
-        $msg .= "response size: " . $download_size . " byte" . ', ';
-        $this->httpRequest->setDebug(true);
-        $msg .= $this->httpRequest->getCurlCli();
-
-        //请求时间超过0.3秒的接口写入log
-        if ($timeoutLog) {
-            \Tool\Log::write($msg, 'comm.request.debug.timeout');
-        } else {
-            \Tool\Log::write($msg, 'comm.request.debug');
-        }
     }
 
     public function getBacktraceInfo()
@@ -236,14 +191,14 @@ abstract class Base
      *
      * @param string $actualName
      * @param string $dataType
-     * @param bool   $isRequired
-     * @param int    $where
+     * @param bool $isRequired
+     * @param int $where
      */
     public function addRule($actualName, $dataType, $isRequired = false, $where = 0)
     {
-        $this->rules[$actualName]['dataType']   = $dataType;
+        $this->rules[$actualName]['dataType'] = $dataType;
         $this->rules[$actualName]['isRequired'] = $isRequired;
-        $this->rules[$actualName]['where']      = $where;
+        $this->rules[$actualName]['where'] = $where;
     }
 
     /**
@@ -251,13 +206,13 @@ abstract class Base
      *
      * @param string $actualName
      * @param string $method
-     * @throws \Comm\Exception\Program
+     * @throws \PCurl\Comm\Exception\Program
      */
     public function addRuleMethod($actualName, $method)
     {
         $allowMethods = array('GET' => 0, 'POST' => 1, 'DELETE' => 2);
         if (!isset($allowMethods[$method])) {
-            throw new \Comm\Exception\Program("method for the param {$actualName} error:  $method");
+            throw new \PCurl\Comm\Exception\Program("method for the param {$actualName} error:  $method");
         }
         if ($this->method != 'POST' && $method == 'POST') {
             $this->httpRequest->setMethod('POST');
@@ -281,9 +236,9 @@ abstract class Base
      * 回调方法示意：（第一个参数为按引用传递的$value）
      * public function func($value, $p1, $p2..., $pn)
      *
-     * @param string   $actualName
+     * @param string $actualName
      * @param callable $callback
-     * @param array    $param
+     * @param array $param
      */
     public function addSetCallback($actualName, callable $callback, array $param = [])
     {
@@ -297,12 +252,12 @@ abstract class Base
      * public function func($p1, $p2..., $pn, $request)
      *
      * @param callable $callback
-     * @param array    $param
+     * @param array $param
      */
     public function addBeforeSendCallback(callable $callback, array $param = [])
     {
-        \Comm\Assert::asException();
-        \Comm\Assert::false(isset($this->callback['beforeSend']), "don not add before send callback repeatly");
+        \PCurl\Tool\Assert::asException();
+        \PCurl\Tool\Assert::false(isset($this->callback['beforeSend']), "don not add before send callback repeatly");
         $this->callback['beforeSend'][] = $callback;
         $this->callback['beforeSend'][] = $param;
     }
@@ -313,12 +268,12 @@ abstract class Base
      * public function func($p1, $p2..., $pn, $request)
      *
      * @param callable $callback
-     * @param array    $param
+     * @param array $param
      */
     public function addAfterSendCallback(callable $callback, array $param = [])
     {
-        \Comm\Assert::asException();
-        \Comm\Assert::false(isset($this->callback['afterSend']), "don not add after send callback repeatly");
+        \PCurl\Tool\Assert::asException();
+        \PCurl\Tool\Assert::false(isset($this->callback['afterSend']), "don not add after send callback repeatly");
         $this->callback['afterSend'][] = $callback;
         $this->callback['afterSend'][] = $param;
     }
@@ -327,12 +282,12 @@ abstract class Base
      * 供 ##接口调用者## 设置参数
      *
      * @param string $name
-     * @param mixed  $value
+     * @param mixed $value
      */
     public function __set($name, $value)
     {
-        \Comm\Assert::asException();
-        \Comm\Assert::true($actualName = $this->getActualName($name), "{$name} is not allowed");
+        \PCurl\Tool\Assert::asException();
+        \PCurl\Tool\Assert::true($actualName = $this->getActualName($name), "{$name} is not allowed");
         $this->values[$actualName] = $this->runCallback('set', $actualName, $value);
     }
 
@@ -376,13 +331,13 @@ abstract class Base
     public function setRequestTimeout($connectTimeout, $time)
     {
         $this->httpRequest->connectTimeout = $connectTimeout;
-        $this->httpRequest->timeout        = $time;
+        $this->httpRequest->timeout = $time;
     }
 
     /**
      * 设定不进行重试机制
      *
-     * @param int $retry  是否重试机制 默认不进行重试
+     * @param int $retry 是否重试机制 默认不进行重试
      */
     public function setRequestRetry($retry = 0)
     {
@@ -411,7 +366,7 @@ abstract class Base
      * 发送正式请求前验证接口规则
      * 规则来自接口开发者的设定
      *
-     * @throws \Comm\Exception\Program
+     * @throws \PCurl\Comm\Exception\Program
      */
     protected function applyRules()
     {
@@ -420,7 +375,7 @@ abstract class Base
         }
         foreach ($this->rules as $actualName => $rule) {
             if ($rule['isRequired'] && !isset($this->values[$actualName])) {
-                throw new \Comm\Exception\Program("param {$actualName} is required");
+                throw new \PCurl\Comm\Exception\Program("param {$actualName} is required");
             } elseif (!isset($this->values[$actualName])) {
                 continue;
             }
@@ -442,8 +397,7 @@ abstract class Base
                     $value = (float)$value;
                     break;
                 case "int64":
-                    if (!\Comm\Util::is64bit()) {
-                        //if (!is_string($value) && !is_float($value)) {/*throw?*/}
+                    if (!\PCurl\Tool\Util::is64bit()) {
                         $value = (string)$value;
                     } else {
                         $value = (int)$value;
@@ -453,7 +407,7 @@ abstract class Base
                     $value = (array)$value;
                     break;
                 default:
-                    throw new \Comm\Exception\Program("invalid data type");
+                    throw new \PCurl\Comm\Exception\Program("invalid data type");
             }
 
             if (isset($this->ruleMethod[$actualName])) {
@@ -497,7 +451,7 @@ abstract class Base
      *
      * @param string $phase 定义回调的名字
      * @param string $actualName
-     * @param mixed  $value
+     * @param mixed $value
      * @return mixed
      */
     private function runCallback($phase, $actualName = '', $value = '')
@@ -507,11 +461,11 @@ abstract class Base
         }
 
         if ($phase == "set") {
-            \Comm\Assert::true($actualName != '');
+            \PCurl\Tool\Assert::true($actualName != '');
             if (isset($this->callback['set'][$actualName])) {
                 $callback = $this->callback['set'][$actualName][0];
-                $param    = $this->callback['set'][$actualName][1];
-                $param    = is_array($param) ? $param : array();
+                $param = $this->callback['set'][$actualName][1];
+                $param = is_array($param) ? $param : array();
                 array_unshift($param, $value);
                 $value = call_user_func_array($callback, $param);
 
@@ -522,8 +476,8 @@ abstract class Base
         } else {
             if (isset($this->callback[$phase])) {
                 $callback = $this->callback[$phase][0];
-                $param    = $this->callback[$phase][1];
-                $param[]  = $this;
+                $param = $this->callback[$phase][1];
+                $param[] = $this;
                 call_user_func_array($callback, $param);
             }
         }

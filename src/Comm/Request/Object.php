@@ -6,7 +6,7 @@
  * @version     2016-06-07 10:29
  */
 
-namespace Comm\Request;
+namespace PCurl\Comm\Request;
 
 class Object
 {
@@ -25,11 +25,7 @@ class Object
         } elseif (isset(self::$_models[$class])) {
             return self::$_models[$class];
         } else {
-            /*if (count(self::$_models)>5) {
-                array_shift(self::$_models);
-            }*/
             $model = self::$_models[$class] = new $class;
-
             return $model;
         }
     }

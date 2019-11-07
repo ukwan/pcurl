@@ -1,6 +1,6 @@
 <?php
 
-namespace Comm\Request;
+namespace PCurl\Comm\Request;
 
 /**
  * 接口处理抽象类,预留
@@ -28,7 +28,7 @@ class Http extends Object
     {
         //创建一个连接对象
         $request_mode = ($is_get == 'GET') ? "GET" : "POST";
-        $this->obj_request = new \Pcurl\Comm\Request\Platform(self::$host, $request_mode, $http_content);
+        $this->obj_request = new \PCurl\Comm\Request\Platform(self::$host, $request_mode, $http_content);
 
         //设置默认超时时间
         $this->obj_request->setRequestTimeout(2000, 2000);
@@ -39,16 +39,14 @@ class Http extends Object
     /**
      * 提交一个url请求
      *
-     * @return array|bool|object
-     * @throws \Comm\Exception\Api
-     * @throws \Comm\Exception\Program
+     * @return bool|mixed
      */
     protected function commitRequest()
     {
         try {
             $res = $this->obj_request->getResponse();
-        } catch (\Exception $e) {
-            $res = false;
+        } catch (\PCurl\Comm\Exception\Api $e) {
+            throw new \PCurl\Comm\Exception\Api($e->getMessage(), $e->getCode());
         }
         $this->reset();
         return $res;

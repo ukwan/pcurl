@@ -1,23 +1,42 @@
 <?php
-/**
- * user_order封装
- */
 
-namespace Pcurl;
+namespace PCurl\Comm;
 
-class Pcurl extends \Comm\Request\Http
+class PCurl extends \PCurl\Comm\Request\Http
 {
+    /**
+     * PCurl constructor.
+     * @param string $host 接口地址
+     */
     public function __construct($host)
     {
         parent::$host = $host;
     }
 
     /**
-     * 创建请求
+     * 提交请求并获取返回值
+     *
+     * @param array $rules 参数规则
+     * @param array $param 参数
+     * @param string $method curl方法post，get
+     * @return array|bool|object
+     * @throws \PCurl\Comm\Exception\Api
+     * @throws \PCurl\Comm\Exception\Program
+     */
+    public function sendRequest($rules, $param, $method = "GET")
+    {
+        $method = ($method && in_array($method, ["GET", "POST"])) ? $method : "GET";
+        $this->createRequest($method);
+        $this->setRequestRules($rules, $param);
+        return parent::commitRequest();
+    }
+
+    /**
+     * 创建请求对象
      *
      * @param string $request_method
      * @param string $http_content
-     * @return Comm\Request\Platform
+     * @return \PCurl\Comm\Request\Platform
      */
     protected function createRequest($request_method = 'GET', $http_content = 'json')
     {
@@ -25,20 +44,11 @@ class Pcurl extends \Comm\Request\Http
     }
 
     /**
-     * 提交请求并获取返回值
-     * @param string $url 请求url
-     * @param array $param 请求参数
-     * @return array|\Pcurl\Comm\Request\Platform
-     */
-    protected function commitRequest($url = '', $param = [])
-    {
-        return parent::commitRequest();
-    }
-
-    /**
-     * 分配参数逻辑 [添加时验证所有必填参数,修改时只验证有值的参数]
-     * @param array $param 传递参数
-     * @return \Pcurl\Comm\Request\Platform
+     * 分配参数逻辑
+     *
+     * @param array $rules 参数规则
+     * @param array $param 参数
+     * @return \PCurl\Comm\Request\Platform
      */
     protected function setRequestRules($rules, $param)
     {
@@ -49,32 +59,5 @@ class Pcurl extends \Comm\Request\Http
             $this->obj_request->$field = isset($param[$field]) ? $param[$field] : null;
         }
         return $this->obj_request;
-    }
-
-    /**
-     * 发送添加数据请求
-     * @param array $rules 参数规则
-     * @param array $param 参数列表
-     * @return array
-     */
-    public function post($rules, $param)
-    {
-        $this->createRequest('POST');
-        $this->setRequestRules($rules, $param);
-        return $this->commitRequest();
-    }
-
-    /**
-     * 发送GET请求
-     *
-     * @param array $rules 参数规则
-     * @param array $param 参数列表
-     * @return array
-     */
-    public function get($rules, $param)
-    {
-        $this->createRequest();
-        $this->setRequestRules($rules, $param);
-        return $this->commitRequest();
     }
 }

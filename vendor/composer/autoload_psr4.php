@@ -6,5 +6,5 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
-    'Pcurl\\' => array($baseDir . '/src'),
+    'PCurl\\' => array($baseDir . '/src'),
 );
