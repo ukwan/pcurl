@@ -1,14 +1,12 @@
 <?php
 require __DIR__ . '/../vendor/autoload.php';
 
-$host = "http://otm.51talk.com/api.php?uri=otm/Tea/teaPalInfo";
+$host = "http://www.baidu.com";
 $obj_curl = new \PCurl\Comm\PCurl($host);
 $rules = array(
-    ['tid', 'int', true],
     ['timestamp', 'int', true]
 );
 $param = array(
-    'tid'       => 47831,
     'timestamp' => time(),
 );
 try {
